@@ -25,7 +25,7 @@
       text-align: center;
       letter-spacing: 2px;
       margin-bottom: 20px;
-      text-transform: uppercase; /* Capital letters */
+      text-transform: uppercase;
     }
 
     .dropdown {
@@ -48,7 +48,6 @@
       color: #333;
     }
 
-    /* Timeline container: flex with no wrap, horizontal scroll */
     .timeline {
       display: flex;
       flex-wrap: nowrap;
@@ -60,23 +59,22 @@
       white-space: nowrap;
     }
 
-    /* Each timeline item fixed width and no shrinking */
     .timeline-item {
-  background: #f9f9f9;
-  border-radius: 8px;
-  padding: 15px 20px;
-  width: 180px;
-  box-shadow: 0 0 8px rgba(0,0,0,0.05);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 10px;
-  font-size: 14px;
-  color: #444;
-  white-space: normal;         /* ✅ allow wrapping */
-  word-break: break-word;      /* ✅ break long words */
-  text-align: center;          /* ✅ center-align multiline */
-}
+      background: #f9f9f9;
+      border-radius: 8px;
+      padding: 15px 20px;
+      width: 180px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 10px;
+      font-size: 14px;
+      color: #444;
+      white-space: normal;
+      word-break: break-word;
+      text-align: center;
+    }
 
     .timeline-icon {
       font-size: 24px;
@@ -141,7 +139,7 @@
       .then(data => {
         sheetData = data;
 
-        const orderIDs = [...new Set(data.map(item => item['Order ID ']?.trim()))].filter(id => id);
+        const orderIDs = [...new Set(data.map(item => item['Order ID']?.trim()))].filter(id => id);
         const orderSelect = document.getElementById('orderSelect');
 
         orderIDs.forEach(orderId => {
@@ -180,7 +178,7 @@
         return;
       }
 
-      const filtered = sheetData.filter(item => item['Order ID ']?.trim() === orderId);
+      const filtered = sheetData.filter(item => item['Order ID']?.trim() === orderId);
 
       if (filtered.length === 0) {
         orderDetails.innerHTML = `<p>Order ID "${orderId}" के लिए कोई डेटा नहीं मिला।</p>`;
@@ -190,14 +188,14 @@
 
       const info = filtered[0];
       orderDetails.innerHTML = `
-        <p><strong>Client:</strong> ${info[' Client Name ']}</p>
-        <p><strong>From:</strong> ${info['Origin']} <strong>To:</strong> ${info['Destination ']}</p>
+        <p><strong>Client:</strong> ${info['Client Name']}</p>
+        <p><strong>From:</strong> ${info['Origin']} <strong>To:</strong> ${info['Destination']}</p>
         <p><strong>Product:</strong> ${info['Product']}</p>
       `;
 
       timeline.innerHTML = '';
       filtered.forEach(row => {
-        const status = row['Status ']?.toLowerCase() === 'complete' ? 'completed' : 'pending';
+        const status = row['Status']?.toLowerCase() === 'complete' ? 'completed' : 'pending';
         const icon = status === 'completed' ? '✔️' : '⏳';
 
         const li = document.createElement('li');
