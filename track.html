@@ -28,6 +28,19 @@
       text-transform: uppercase;
     }
 
+    .dropdown {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    select {
+      font-size: 16px;
+      padding: 8px 12px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      min-width: 200px;
+    }
+
     #orderDetails {
       margin-bottom: 20px;
       font-size: 18px;
@@ -100,6 +113,14 @@
 <body>
   <div class="container">
     <h1>BENEDICTORY WOOD PANELS</h1>
+
+    <div class="dropdown">
+      <label for="orderSelect">Select Order ID: </label>
+      <select id="orderSelect">
+        <option value="">-- Select Order ID --</option>
+      </select>
+    </div>
+
     <div id="orderDetails"></div>
     <ul class="timeline" id="timeline"></ul>
   </div>
@@ -116,9 +137,38 @@
     fetch(sheetURL)
       .then(res => res.json())
       .then(data => {
-        sheetData = data;
-        const orderId = getOrderIdFromURL();
-        showOrder(orderId);
+        // Trim column keys and values
+        sheetData = data.map(item => {
+          const trimmed = {};
+          Object.keys(item).forEach(key => {
+            trimmed[key.trim()] = item[key].trim();
+          });
+          return trimmed;
+        });
+
+        const orderIDs = [...new Set(sheetData.map(item => item['Order ID']))].filter(id => id);
+        const orderSelect = document.getElementById('orderSelect');
+
+        orderIDs.forEach(orderId => {
+          const option = document.createElement('option');
+          option.value = orderId;
+          option.textContent = orderId;
+          orderSelect.appendChild(option);
+        });
+
+        const initialOrderId = getOrderIdFromURL();
+        if (initialOrderId && orderIDs.includes(initialOrderId)) {
+          orderSelect.value = initialOrderId;
+          showOrder(initialOrderId);
+        } else {
+          showOrder('');
+        }
+
+        orderSelect.addEventListener('change', () => {
+          const selectedId = orderSelect.value;
+          window.history.replaceState(null, '', `?order=${selectedId}`);
+          showOrder(selectedId);
+        });
       })
       .catch(err => {
         document.getElementById('orderDetails').innerText = "डेटा लोड करने में समस्या आई है। कृपया बाद में पुनः प्रयास करें।";
@@ -130,12 +180,12 @@
       const orderDetails = document.getElementById('orderDetails');
 
       if (!orderId) {
-        orderDetails.innerHTML = '<p>Order ID URL में नहीं है।</p>';
+        orderDetails.innerHTML = '<p>कृपया ऊपर से Order ID चुनें।</p>';
         timeline.innerHTML = '';
         return;
       }
 
-      const filtered = sheetData.filter(item => item['Order ID']?.trim() === orderId);
+      const filtered = sheetData.filter(item => item['Order ID'] === orderId);
 
       if (filtered.length === 0) {
         orderDetails.innerHTML = `<p>Order ID "${orderId}" के लिए कोई डेटा नहीं मिला।</p>`;
@@ -152,7 +202,7 @@
 
       timeline.innerHTML = '';
       filtered.forEach(row => {
-        const status = row['Status']?.toLowerCase() === 'complete' ? 'completed' : 'pending';
+        const status = row['Status'].toLowerCase() === 'complete' ? 'completed' : 'pending';
         const icon = status === 'completed' ? '✔️' : '⏳';
 
         const li = document.createElement('li');
