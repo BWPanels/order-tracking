@@ -141,7 +141,7 @@
       .then(data => {
         sheetData = data;
 
-        const orderIDs = [...new Set(data.map(item => item['Order ID ']?.trim()))].filter(id => id);
+        const orderIDs = [...new Set(data.map(item => item['Order ID']?.trim()))].filter(id => id);
         const orderSelect = document.getElementById('orderSelect');
 
         orderIDs.forEach(orderId => {
