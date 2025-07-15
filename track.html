@@ -24,21 +24,8 @@
     h1 {
       text-align: center;
       letter-spacing: 2px;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
       text-transform: uppercase;
-    }
-
-    .dropdown {
-      margin-bottom: 20px;
-      text-align: center;
-    }
-
-    select {
-      font-size: 16px;
-      padding: 8px 12px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      min-width: 200px;
     }
 
     #orderDetails {
@@ -113,15 +100,7 @@
 <body>
   <div class="container">
     <h1>BENEDICTORY WOOD PANELS</h1>
-
-    <div class="dropdown">
-      <label for="orderSelect">Select Order ID: </label>
-      <select id="orderSelect">
-        <option value="">-- Select Order ID --</option>
-      </select>
-    </div>
-
-    <div id="orderDetails"></div>
+    <div id="orderDetails">Loading...</div>
     <ul class="timeline" id="timeline"></ul>
   </div>
 
@@ -134,58 +113,17 @@
       return params.get("order")?.trim() || "";
     }
 
-    fetch(sheetURL)
-      .then(res => res.json())
-      .then(data => {
-        // Trim column keys and values
-        sheetData = data.map(item => {
-          const trimmed = {};
-          Object.keys(item).forEach(key => {
-            trimmed[key.trim()] = item[key].trim();
-          });
-          return trimmed;
-        });
-
-        const orderIDs = [...new Set(sheetData.map(item => item['Order ID']))].filter(id => id);
-        const orderSelect = document.getElementById('orderSelect');
-
-        orderIDs.forEach(orderId => {
-          const option = document.createElement('option');
-          option.value = orderId;
-          option.textContent = orderId;
-          orderSelect.appendChild(option);
-        });
-
-        const initialOrderId = getOrderIdFromURL();
-        if (initialOrderId && orderIDs.includes(initialOrderId)) {
-          orderSelect.value = initialOrderId;
-          showOrder(initialOrderId);
-        } else {
-          showOrder('');
-        }
-
-        orderSelect.addEventListener('change', () => {
-          const selectedId = orderSelect.value;
-          window.history.replaceState(null, '', `?order=${selectedId}`);
-          showOrder(selectedId);
-        });
-      })
-      .catch(err => {
-        document.getElementById('orderDetails').innerText = "डेटा लोड करने में समस्या आई है। कृपया बाद में पुनः प्रयास करें।";
-        console.error(err);
-      });
-
     function showOrder(orderId) {
       const timeline = document.getElementById('timeline');
       const orderDetails = document.getElementById('orderDetails');
 
       if (!orderId) {
-        orderDetails.innerHTML = '<p>कृपया ऊपर से Order ID चुनें।</p>';
+        orderDetails.innerHTML = '<p style="text-align:center; color:#555;">Order ID URL में नहीं है।</p>';
         timeline.innerHTML = '';
         return;
       }
 
-      const filtered = sheetData.filter(item => item['Order ID'] === orderId);
+      const filtered = sheetData.filter(item => item['Order ID ']?.trim() === orderId);
 
       if (filtered.length === 0) {
         orderDetails.innerHTML = `<p>Order ID "${orderId}" के लिए कोई डेटा नहीं मिला।</p>`;
@@ -195,14 +133,15 @@
 
       const info = filtered[0];
       orderDetails.innerHTML = `
-        <p><strong>Client:</strong> ${info['Client Name']}</p>
-        <p><strong>From:</strong> ${info['Origin']} <strong>To:</strong> ${info['Destination']}</p>
+        <p><strong>Order ID:</strong> ${orderId}</p>
+        <p><strong>Client:</strong> ${info[' Client Name ']}</p>
+        <p><strong>From:</strong> ${info['Origin']} <strong>To:</strong> ${info['Destination ']}</p>
         <p><strong>Product:</strong> ${info['Product']}</p>
       `;
 
       timeline.innerHTML = '';
       filtered.forEach(row => {
-        const status = row['Status'].toLowerCase() === 'complete' ? 'completed' : 'pending';
+        const status = row['Status ']?.toLowerCase() === 'complete' ? 'completed' : 'pending';
         const icon = status === 'completed' ? '✔️' : '⏳';
 
         const li = document.createElement('li');
@@ -217,6 +156,18 @@
         timeline.appendChild(li);
       });
     }
+
+    fetch(sheetURL)
+      .then(res => res.json())
+      .then(data => {
+        sheetData = data;
+        const orderId = getOrderIdFromURL();
+        showOrder(orderId);
+      })
+      .catch(err => {
+        document.getElementById('orderDetails').innerText = "डेटा लोड करने में समस्या आई है। कृपया बाद में पुनः प्रयास करें।";
+        console.error(err);
+      });
   </script>
 </body>
 </html>
