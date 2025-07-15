@@ -3,143 +3,215 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Benedictory Wood Panels - Order Tracking</title>
+  <title>Order Tracking</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-      margin: 0; padding: 20px;
+      background: #f4f4f4;
+      padding: 30px;
       display: flex;
       justify-content: center;
     }
+
     .container {
-      background: white;
-      width: 900px;
-      padding: 20px 30px;
+      background: #fff;
+      width: 1000px;
       border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 30px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      letter-spacing: 2px;
+      margin-bottom: 20px;
+      text-transform: uppercase; /* Capital letters */
+    }
+
+    .dropdown {
+      margin-bottom: 20px;
       text-align: center;
     }
-    h1 {
-      margin: 0 0 10px 0;
-      font-weight: 700;
-      letter-spacing: 5px;
-      color: #3a3a3a;
+
+    select {
+      font-size: 16px;
+      padding: 8px 12px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      min-width: 200px;
     }
-    .stats {
+
+    #orderDetails {
       margin-bottom: 20px;
-      font-size: 14px;
-      color: #555;
+      font-size: 18px;
+      text-align: center;
+      color: #333;
     }
+
+    /* Timeline container: flex with no wrap, horizontal scroll */
     .timeline {
       display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      gap: 20px;
       list-style: none;
-      padding: 0;
+      padding: 20px 0;
       margin: 0;
+      white-space: nowrap;
     }
+
+    /* Each timeline item fixed width and no shrinking */
     .timeline-item {
   background: #f9f9f9;
   border-radius: 8px;
   padding: 15px 20px;
-  min-width: 200px;           /* ✅ Fixed width */
-  flex-shrink: 0;             /* ✅ Prevent squeezing */
+  width: 180px;
   box-shadow: 0 0 8px rgba(0,0,0,0.05);
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin: 10px;
   font-size: 14px;
   color: #444;
-  white-space: normal;        /* ✅ Allow wrap */
-  word-break: break-word;
-  text-align: center;
+  white-space: normal;         /* ✅ allow wrapping */
+  word-break: break-word;      /* ✅ break long words */
+  text-align: center;          /* ✅ center-align multiline */
 }
+
     .timeline-icon {
       font-size: 24px;
-      background-color: #007bff;
-      color: white;
       border-radius: 50%;
-      width: 44px;
-      height: 44px;
+      width: 40px;
+      height: 40px;
+      margin: 0 auto 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 6px;
     }
+
     .completed .timeline-icon {
-      background-color: #28a745;
+      background: #28a745;
+      color: white;
     }
+
     .pending .timeline-icon {
-      background-color: #dc3545;
+      background: #dc3545;
+      color: white;
     }
+
     .timeline-content h5 {
-      margin: 0;
-      font-weight: 600;
-      color: #222;
+      margin: 0 0 5px 0;
+      font-size: 16px;
+      color: #333;
     }
+
     .timeline-content p {
       margin: 0;
-      font-size: 13px;
+      font-size: 14px;
       color: #666;
     }
   </style>
 </head>
 <body>
-
   <div class="container">
-    <h1>Benedictory Wood Panels</h1>
-    <div class="stats" id="orderDetails"></div>
+    <h1>BENEDICTORY WOOD PANELS</h1>
+
+    <div class="dropdown">
+      <label for="orderSelect">Select Order ID: </label>
+      <select id="orderSelect">
+        <option value="">-- Select Order ID --</option>
+      </select>
+    </div>
+
+    <div id="orderDetails"></div>
     <ul class="timeline" id="timeline"></ul>
   </div>
 
   <script>
-    const sheetUrl = 'https://opensheet.elk.sh/1OviCPRn226Jv3Pn046f3PApugWr91bAMF-fIQkYm8L8/Sheet1';
-    const orderId = 'ORD5818'; // Yaha aap manually order ID change kar sakte ho
+    const sheetURL = 'https://opensheet.elk.sh/1OviCPRn226Jv3Pn046f3PApugWr91bAMF-fIQkYm8L8/Sheet1';
+    let sheetData = [];
 
-    fetch(sheetUrl)
-      .then(response => response.json())
+    function getOrderIdFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("order")?.trim() || "";
+    }
+
+    fetch(sheetURL)
+      .then(res => res.json())
       .then(data => {
-        const timeline = document.getElementById('timeline');
-        const orderDetails = document.getElementById('orderDetails');
+        sheetData = data;
 
-        // Filter data by Order ID
-        const currentOrder = data.filter(item => item['Order ID ']?.trim() === orderId);
+        const orderIDs = [...new Set(data.map(item => item['Order ID']?.trim()))].filter(id => id);
+        const orderSelect = document.getElementById('orderSelect');
 
-        if (currentOrder.length === 0) {
-          orderDetails.innerHTML = `<p>Order ID "${orderId}" not found.</p>`;
-          return;
+        orderIDs.forEach(orderId => {
+          const option = document.createElement('option');
+          option.value = orderId;
+          option.textContent = orderId;
+          orderSelect.appendChild(option);
+        });
+
+        const initialOrderId = getOrderIdFromURL();
+        if (initialOrderId && orderIDs.includes(initialOrderId)) {
+          orderSelect.value = initialOrderId;
+          showOrder(initialOrderId);
+        } else {
+          showOrder('');
         }
 
-        // Display client & product info (from first entry)
-        const info = currentOrder[0];
-        orderDetails.innerHTML = `
-          <p><strong>Order ID:</strong> ${info['Order ID ']}</p>
-          <p><strong>Client:</strong> ${info[' Client Name ']}</p>
-          <p><strong>From:</strong> ${info['Origin']} <strong>To:</strong> ${info['Destination ']}</p>
-          <p><strong>Product:</strong> ${info['Product']}</p>
-        `;
-
-        // Create timeline items
-        currentOrder.forEach(item => {
-          const status = item['Status ']?.toLowerCase() === 'complete' ? 'completed' : 'pending';
-          const li = document.createElement('li');
-          li.className = `timeline-item ${status}`;
-          li.innerHTML = `
-            <div class="timeline-icon">✔️</div>
-            <div class="timeline-content">
-              <h5>${item['Step']}</h5>
-              <p>${item['Date']}</p>
-            </div>
-          `;
-          timeline.appendChild(li);
+        orderSelect.addEventListener('change', () => {
+          const selectedId = orderSelect.value;
+          window.history.replaceState(null, '', `?order=${selectedId}`);
+          showOrder(selectedId);
         });
       })
-      .catch(error => {
-        document.getElementById('orderDetails').innerText = 'Error loading data.';
-        console.error('Error:', error);
+      .catch(err => {
+        document.getElementById('orderDetails').innerText = "डेटा लोड करने में समस्या आई है। कृपया बाद में पुनः प्रयास करें।";
+        console.error(err);
       });
-  </script>
 
+    function showOrder(orderId) {
+      const timeline = document.getElementById('timeline');
+      const orderDetails = document.getElementById('orderDetails');
+
+      if (!orderId) {
+        orderDetails.innerHTML = '<p>कृपया ऊपर से Order ID चुनें।</p>';
+        timeline.innerHTML = '';
+        return;
+      }
+
+      const filtered = sheetData.filter(item => item['Order ID ']?.trim() === orderId);
+
+      if (filtered.length === 0) {
+        orderDetails.innerHTML = `<p>Order ID "${orderId}" के लिए कोई डेटा नहीं मिला।</p>`;
+        timeline.innerHTML = '';
+        return;
+      }
+
+      const info = filtered[0];
+      orderDetails.innerHTML = `
+        <p><strong>Client:</strong> ${info[' Client Name ']}</p>
+        <p><strong>From:</strong> ${info['Origin']} <strong>To:</strong> ${info['Destination ']}</p>
+        <p><strong>Product:</strong> ${info['Product']}</p>
+      `;
+
+      timeline.innerHTML = '';
+      filtered.forEach(row => {
+        const status = row['Status ']?.toLowerCase() === 'complete' ? 'completed' : 'pending';
+        const icon = status === 'completed' ? '✔️' : '⏳';
+
+        const li = document.createElement('li');
+        li.className = `timeline-item ${status}`;
+        li.innerHTML = `
+          <div class="timeline-icon">${icon}</div>
+          <div class="timeline-content">
+            <h5>${row['Step']}</h5>
+            <p>${row['Date']}</p>
+          </div>
+        `;
+        timeline.appendChild(li);
+      });
+    }
+  </script>
 </body>
 </html>
